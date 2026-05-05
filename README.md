@@ -315,7 +315,7 @@ Cost optimisation strategies: Reserved Instances (40–60% compute saving), Spot
 
 ## Academic Context
 
-This project was completed as part of the **7009SCN — Cloud Infrastructure and Operations** module at Coventry University (MSc Cybersecurity, 2025–2026). Module grade: **85%**.
+This project was completed as part of the **Cloud Infrastructure and Operations** module at Coventry University (MSc Cybersecurity, 2025–2026). Module grade: **85%**.
 
 The accompanying security analysis report (2,500+ words) covers threat modelling, container hardening methodology, vulnerability management pipeline design, host and daemon security, and full logging and incident response architecture.
 
