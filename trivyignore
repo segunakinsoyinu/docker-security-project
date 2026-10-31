@@ -1,0 +1,18 @@
+# Security scanning and CI/CD configuration
+
+# Trivy ignore file - Add specific CVEs that are accepted risks
+# Example: CVE-2023-12345
+
+# Ignore test files
+*test*
+*Test*
+*TEST*
+
+# Ignore documentation
+*.md
+*.txt
+README*
+
+# Ignore git files
+.git/
+.gitignore

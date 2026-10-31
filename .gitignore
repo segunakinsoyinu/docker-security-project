@@ -1,0 +1,12 @@
+# Secrets - never push passwords to GitHub
+secrets/
+
+# Runtime data - not needed for portfolio review
+data/
+logs/
+
+# Video file - too large for GitHub
+Demo Video.mp4
+
+# Mac system files
+.DS_Store

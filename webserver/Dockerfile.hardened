@@ -1,0 +1,87 @@
+# Multi-stage build for security and efficiency
+FROM alpine:3.19 AS builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    nginx \
+    php82 \
+    php82-fpm \
+    php82-mysqli \
+    php82-json \
+    php82-session \
+    && rm -rf /var/cache/apk/*
+
+# Production stage with minimal Alpine image
+FROM alpine:3.19
+
+# Install only runtime dependencies
+RUN apk add --no-cache \
+    nginx \
+    php82 \
+    php82-fpm \
+    php82-mysqli \
+    php82-json \
+    php82-session \
+    curl \
+    && rm -rf /var/cache/apk/* \
+    && rm -rf /tmp/*
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S webgroup && \
+    adduser -u 1001 -S webuser -G webgroup -h /home/webuser -s /bin/sh
+
+# Create required directories with proper permissions
+RUN mkdir -p /var/log/nginx \
+    /var/lib/nginx/tmp/client_body \
+    /var/lib/nginx/tmp/proxy \
+    /var/lib/nginx/tmp/fastcgi \
+    /var/lib/nginx/tmp/uwsgi \
+    /var/lib/nginx/tmp/scgi \
+    /run/nginx \
+    /run/php \
+    /var/www/html \
+    /var/cache/nginx \
+    && chown -R webuser:webgroup /var/log/nginx \
+    /var/lib/nginx \
+    /run/nginx \
+    /run/php \
+    /var/www/html \
+    /var/cache/nginx \
+    && chmod 755 /run/nginx /run/php \
+    && touch /var/log/nginx/access.log /var/log/nginx/error.log /var/log/nginx/php_errors.log /var/log/nginx/php-fpm.log \
+    && chown webuser:webgroup /var/log/nginx/*.log
+
+# Copy application files
+COPY --chown=webuser:webgroup webfiles/ /var/www/html/
+
+# Copy configuration files with secure permissions
+COPY --chown=root:root configfiles/nginx-hardened.conf /etc/nginx/nginx.conf
+COPY --chown=root:root configfiles/php-hardened.ini /etc/php82/php.ini
+COPY --chown=root:root configfiles/php-fpm-hardened.conf /etc/php82/php-fpm.conf
+COPY --chown=root:root configfiles/www-hardened.conf /etc/php82/php-fpm.d/www.conf
+COPY --chown=webuser:webgroup configfiles/docker-entrypoint-hardened.sh /docker-entrypoint.sh
+
+# Set secure permissions
+RUN chmod 755 /docker-entrypoint.sh \
+    && chmod 644 /etc/nginx/nginx.conf \
+    && chmod 644 /etc/php82/php.ini \
+    && chmod 644 /etc/php82/php-fpm.conf \
+    && chmod 644 /etc/php82/php-fpm.d/www.conf \
+    && chmod -R 644 /var/www/html/* \
+    && find /var/www/html -type d -exec chmod 755 {} \;
+
+# Remove default nginx files
+RUN rm -f /var/www/html/index.html
+
+# Health check for container monitoring
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
+
+# Expose only necessary port
+EXPOSE 80
+
+# Switch to non-root user
+USER webuser:webgroup
+
+# Use secure entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]

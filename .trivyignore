@@ -1,0 +1,27 @@
+# Trivy configuration for security scanning
+cache:
+  backend: "fs"
+  dir: ".trivy/cache"
+
+db:
+  skip-update: false
+  
+format: table
+severity: HIGH,CRITICAL
+ignore-unfixed: true
+
+vulnerability:
+  type:
+    - os
+    - library
+  ignore-status:
+    - end_of_life
+
+secret:
+  skip-dirs:
+    - .git
+    - .trivy
+  skip-files:
+    - "*.md"
+
+timeout: 10m0s

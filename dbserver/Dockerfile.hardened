@@ -1,0 +1,48 @@
+# Use official MariaDB Alpine image for security and minimal size
+FROM mariadb:10.11-jammy AS base
+
+# Create non-root user for MariaDB
+RUN groupadd -r mysql-secure --gid=999 && \
+    useradd -r -g mysql-secure --uid=999 mysql-secure
+
+# Create secure database image
+FROM mariadb:10.11-jammy
+
+# Update and install minimal security packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && rm -rf /var/tmp/*
+
+# Copy secure MariaDB configuration
+COPY --chown=root:root mysqld-hardened.cnf /etc/mysql/mariadb.conf.d/50-server.cnf
+
+# Copy SQL initialization scripts with proper permissions
+COPY --chown=root:root sqlconfig/ /docker-entrypoint-initdb.d/
+
+# Set secure permissions on configuration files
+RUN chmod 644 /etc/mysql/mariadb.conf.d/50-server.cnf \
+    && chmod -R 644 /docker-entrypoint-initdb.d/* \
+    && find /docker-entrypoint-initdb.d -type d -exec chmod 755 {} \;
+
+# Create secure data directory
+RUN mkdir -p /var/lib/mysql-secure \
+    && chown -R mysql:mysql /var/lib/mysql-secure \
+    && chmod 755 /var/lib/mysql-secure
+
+# Health check for database readiness
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+    CMD mysqladmin ping -h localhost --silent || exit 1
+
+# Use non-privileged port internally (mapped externally)
+EXPOSE 3306
+
+# Run as mysql user (non-root)
+USER mysql
+
+# Override default command with security options
+CMD ["mysqld", "--user=mysql", "--bind-address=0.0.0.0"]

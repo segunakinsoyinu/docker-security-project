@@ -1,0 +1,81 @@
+# MariaDB hardened configuration
+
+[client]
+port = 3306
+socket = /var/run/mysqld/mysqld.sock
+
+[mysqld_safe]
+socket = /var/run/mysqld/mysqld.sock
+nice = 0
+
+[mysqld]
+# Basic settings
+user = mysql
+pid-file = /var/run/mysqld/mysqld.pid
+socket = /var/run/mysqld/mysqld.sock
+port = 3306
+basedir = /usr
+datadir = /var/lib/mysql
+tmpdir = /tmp
+lc-messages-dir = /usr/share/mysql
+
+# Security settings
+bind-address = 0.0.0.0
+skip-external-locking = 1
+skip-name-resolve = 1
+
+# Disable dangerous features
+skip-show-database = 1
+safe-user-create = 1
+secure-auth = 1
+local-infile = 0
+
+# Connection and thread settings
+max_connections = 50
+max_user_connections = 45
+thread_cache_size = 8
+thread_stack = 192K
+
+# Buffer settings
+key_buffer_size = 16M
+max_allowed_packet = 16M
+table_open_cache = 64
+sort_buffer_size = 512K
+net_buffer_length = 8K
+read_buffer_size = 256K
+read_rnd_buffer_size = 512K
+myisam_sort_buffer_size = 8M
+
+# Logging
+log_error = /var/log/mysql/error.log
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time = 2
+
+# InnoDB settings
+default-storage-engine = innodb
+innodb_buffer_pool_size = 128M
+innodb_log_buffer_size = 8M
+innodb_file_per_table = 1
+innodb_open_files = 400
+innodb_io_capacity = 400
+innodb_flush_method = O_DIRECT
+
+# Binary logging (disabled for security in dev)
+skip-log-bin
+
+# SSL/TLS settings (placeholder for future implementation)
+# ssl-ca = /etc/mysql/ssl/ca-cert.pem
+# ssl-cert = /etc/mysql/ssl/server-cert.pem
+# ssl-key = /etc/mysql/ssl/server-key.pem
+
+[mysqldump]
+quick
+quote-names
+max_allowed_packet = 16M
+
+[mysql]
+no-auto-rehash
+
+[isamchk]
+key_buffer_size = 16M
